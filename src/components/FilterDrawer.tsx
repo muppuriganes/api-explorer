@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Zap } from "lucide-react";
+import { Check, X, Zap } from "lucide-react";
 import { Chip } from "./Chip";
 import { AUTH_OPTIONS, TRI_OPTIONS } from "./FilterBar";
 import { categoryIcon, type CategoryCount } from "./Sidebar";
@@ -74,9 +74,19 @@ export function FilterDrawer({
             </div>
 
             <div className="px-5">
-              <h2 className="pb-4 font-mono text-sm font-bold text-ink">
-                {mode === "filters" ? "Filters" : "Categories"}
-              </h2>
+              <div className="flex items-center justify-between pb-4">
+                <h2 className="font-mono text-sm font-bold text-ink">
+                  {mode === "filters" ? "Filters" : "Categories"}
+                </h2>
+                <button
+                  type="button"
+                  onClick={onClose}
+                  aria-label="Close"
+                  className="rounded p-1 text-mut transition-colors hover:text-ink"
+                >
+                  <X size={16} />
+                </button>
+              </div>
 
               {mode === "filters" ? (
                 <>
@@ -85,6 +95,7 @@ export function FilterDrawer({
                       <Chip
                         key={o.value}
                         label={o.label}
+                        tone={o.tone}
                         active={draft.auth === o.value}
                         onClick={() => setDraft((d) => ({ ...d, auth: o.value }))}
                       />
@@ -95,6 +106,7 @@ export function FilterDrawer({
                       <Chip
                         key={o.value}
                         label={o.label}
+                        tone={o.tone}
                         active={draft.cors === o.value}
                         onClick={() => setDraft((d) => ({ ...d, cors: o.value }))}
                       />
@@ -105,6 +117,7 @@ export function FilterDrawer({
                       <Chip
                         key={o.value}
                         label={o.label}
+                        tone={o.tone}
                         active={draft.https === o.value}
                         onClick={() => setDraft((d) => ({ ...d, https: o.value }))}
                       />
@@ -121,25 +134,37 @@ export function FilterDrawer({
                             : { auth: "none", cors: "yes", https: "yes" },
                         )
                       }
-                      className={`inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 font-mono text-xs transition-colors ${
+                      className={`flex w-full items-center gap-2 rounded-lg border px-3 py-2.5 text-left font-mono text-xs transition-colors ${
                         zeroFriction
-                          ? "border-warn bg-warn/10 text-warn"
+                          ? "border-warn/60 bg-warn/10 text-warn"
                           : "border-edge text-mut"
                       }`}
                     >
-                      <Zap size={12} />
-                      Zero-friction (No Auth + CORS Yes + HTTPS Yes)
+                      <Zap size={13} className={zeroFriction ? "fill-warn" : undefined} />
+                      <span className="flex-1">
+                        Zero-friction (No Auth + CORS Yes + HTTPS Yes)
+                      </span>
+                      <span
+                        className={`flex h-4.5 w-4.5 items-center justify-center rounded border ${
+                          zeroFriction
+                            ? "border-warn bg-warn text-bg"
+                            : "border-edge"
+                        }`}
+                        aria-hidden="true"
+                      >
+                        {zeroFriction && <Check size={11} strokeWidth={3} />}
+                      </span>
                     </button>
                   </DrawerSection>
 
-                  <div className="mt-5 flex gap-3">
+                  <div className="mt-5 flex items-center gap-4">
                     <button
                       type="button"
                       onClick={() => {
                         onApplyFilters(draft);
                         onClose();
                       }}
-                      className="flex-1 rounded-md bg-acc py-2.5 font-mono text-sm font-bold text-bg transition-opacity hover:opacity-90"
+                      className="flex-1 rounded-lg bg-acc py-2.5 font-mono text-sm font-bold text-bg shadow-[0_0_18px_color-mix(in_srgb,var(--accent)_30%,transparent)] transition-opacity hover:opacity-90"
                     >
                       Apply Filters
                     </button>
@@ -149,7 +174,7 @@ export function FilterDrawer({
                         onClearAll();
                         onClose();
                       }}
-                      className="rounded-md border border-edge px-4 py-2.5 font-mono text-sm text-mut hover:text-ink"
+                      className="font-mono text-xs text-mut underline-offset-4 hover:text-ink hover:underline"
                     >
                       Clear all
                     </button>

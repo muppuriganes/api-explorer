@@ -23,6 +23,7 @@ import {
   Link as LinkIcon,
   Mail,
   MapPin,
+  Menu,
   Music,
   Newspaper,
   Palette,
@@ -100,6 +101,7 @@ interface SidebarProps {
   onToggleCategory: (name: string) => void;
   onClearCategories: () => void;
   totalCount: number;
+  onCollapse: () => void;
 }
 
 export function Sidebar({
@@ -108,16 +110,26 @@ export function Sidebar({
   onToggleCategory,
   onClearCategories,
   totalCount,
+  onCollapse,
 }: SidebarProps) {
   const [showAll, setShowAll] = useState(false);
   const visible = showAll ? categories : categories.slice(0, COLLAPSED_COUNT);
 
   return (
     <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col overflow-y-auto border-r border-edge bg-bg lg:flex">
-      <div className="px-4 pb-4 pt-5">
+      <div className="flex items-center justify-between px-4 pb-4 pt-5">
         <p className="font-mono text-sm font-bold tracking-tight text-acc">
           &gt;_ API EXPLORER
         </p>
+        <button
+          type="button"
+          onClick={onCollapse}
+          title="Collapse sidebar"
+          aria-label="Collapse sidebar"
+          className="rounded p-1 text-mut transition-colors hover:text-acc"
+        >
+          <Menu size={15} />
+        </button>
       </div>
 
       <nav className="flex-1 px-2 pb-6" aria-label="Categories">
@@ -177,15 +189,19 @@ function SidebarRow({
       type="button"
       onClick={onClick}
       aria-pressed={active}
-      className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-[13px] transition-colors ${
+      className={`flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left font-mono text-xs transition-colors ${
         active
-          ? "bg-acc/10 text-acc shadow-[inset_2px_0_0_var(--accent)]"
+          ? "bg-acc/15 font-bold text-acc shadow-[0_0_12px_color-mix(in_srgb,var(--accent)_15%,transparent)]"
           : "text-mut hover:bg-surface hover:text-ink"
       }`}
     >
       <Icon size={14} className="shrink-0 opacity-80" />
       <span className="min-w-0 flex-1 truncate">{label}</span>
-      <span className="shrink-0 font-mono text-[11px] tabular-nums opacity-70">
+      <span
+        className={`shrink-0 rounded px-1.5 py-px font-mono text-[10px] tabular-nums ${
+          active ? "bg-acc font-bold text-bg" : "opacity-60"
+        }`}
+      >
         {count.toLocaleString("en-US")}
       </span>
     </button>

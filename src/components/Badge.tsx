@@ -15,7 +15,7 @@ interface BadgeProps {
   label: string;
   value: string;
   tone: BadgeTone;
-  /** LED power-on entrance; index staggers badges left-to-right. */
+  /** Power-on entrance; index staggers badges left-to-right. */
   animate?: boolean;
   index?: number;
 }
@@ -24,9 +24,8 @@ export function Badge({ label, value, tone, animate = false, index = 0 }: BadgeP
   const style = { "--tone": TONE_VAR[tone] } as CSSProperties;
   const content = (
     <>
-      <span className="led" aria-hidden="true" />
-      <span className="opacity-60">{label}</span>
-      <span>{value}</span>
+      <span className="badge-label">{label}</span>
+      <span className="badge-value">{value}</span>
     </>
   );
 

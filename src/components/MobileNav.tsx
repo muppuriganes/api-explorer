@@ -26,7 +26,7 @@ export function MobileNav({
         <NavButton icon={<Home size={18} />} label="Home" onClick={onHome} />
         <NavButton icon={<LayoutGrid size={18} />} label="Categories" onClick={onCategories} />
         <NavButton
-          icon={<Star size={18} className={favoritesOnly ? "fill-warn text-warn" : undefined} />}
+          icon={<Star size={18} className={favoritesOnly ? "fill-acc text-acc" : undefined} />}
           label="Favorites"
           active={favoritesOnly}
           onClick={onFavorites}
@@ -66,7 +66,7 @@ function NavButton({
       type="button"
       onClick={onClick}
       className={`flex flex-col items-center gap-1 py-2.5 font-mono text-[10px] transition-colors ${
-        active ? "text-warn" : "text-mut hover:text-ink"
+        active ? "text-acc" : "text-mut hover:text-ink"
       }`}
     >
       {icon}

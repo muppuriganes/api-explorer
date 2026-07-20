@@ -41,7 +41,7 @@ export function SearchBar({
   }, [status, stale]);
 
   return (
-    <div className="rounded-lg border border-edge bg-surface px-4 py-3">
+    <div className="rounded-xl border border-edge bg-surface px-5 py-4 transition-[border-color,box-shadow] duration-150 focus-within:border-acc/50 focus-within:shadow-[0_0_20px_color-mix(in_srgb,var(--accent)_18%,transparent)]">
       <label className="flex items-baseline gap-2 font-mono text-sm sm:text-base">
         <span className="shrink-0 whitespace-pre text-acc">{typed}</span>
         {done ? (

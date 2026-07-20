@@ -1,26 +1,33 @@
+import type { CSSProperties } from "react";
+
+export type ChipTone = "accent" | "green" | "amber" | "red" | "purple" | "neutral";
+
+const TONE_VAR: Record<ChipTone, string> = {
+  accent: "var(--accent)",
+  green: "var(--ok)",
+  amber: "var(--warn)",
+  red: "var(--bad)",
+  purple: "var(--info)",
+  neutral: "var(--muted)",
+};
+
 interface ChipProps {
   label: string;
   active: boolean;
   onClick: () => void;
-  /** "preset" gives the ⚡ Zero-friction chip its yellow-green terminal look. */
-  variant?: "default" | "preset";
+  /** Semantic color — active chips fill solid in their tone (mock style). */
+  tone?: ChipTone;
 }
 
-export function Chip({ label, active, onClick, variant = "default" }: ChipProps) {
-  const base =
-    "rounded-md border px-2.5 py-1 font-mono text-xs transition-colors cursor-pointer select-none";
-  let cls: string;
-  if (variant === "preset") {
-    cls = active
-      ? "border-warn text-warn bg-warn/10 shadow-[0_0_12px_color-mix(in_srgb,var(--warn)_35%,transparent)]"
-      : "border-edge text-mut hover:border-warn/60 hover:text-warn";
-  } else {
-    cls = active
-      ? "border-acc text-acc bg-acc/10 shadow-[0_0_10px_color-mix(in_srgb,var(--accent)_28%,transparent)]"
-      : "border-edge text-mut hover:border-acc/50 hover:text-ink";
-  }
+export function Chip({ label, active, onClick, tone = "accent" }: ChipProps) {
   return (
-    <button type="button" aria-pressed={active} onClick={onClick} className={`${base} ${cls}`}>
+    <button
+      type="button"
+      aria-pressed={active}
+      onClick={onClick}
+      className={`chip ${active ? "is-active" : ""}`}
+      style={{ "--tone": TONE_VAR[tone] } as CSSProperties}
+    >
       {label}
     </button>
   );

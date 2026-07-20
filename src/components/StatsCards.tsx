@@ -71,7 +71,7 @@ function StatCard({ def, value }: { def: StatDef; value: number }) {
           <p className="truncate font-mono text-[10px] font-medium uppercase tracking-widest text-mut">
             {def.label}
           </p>
-          <p className="font-mono text-xl font-bold text-ink tabular-nums">
+          <p className="font-mono text-2xl font-bold text-ink tabular-nums">
             {display.toLocaleString("en-US")}
           </p>
         </div>

@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { AnimatePresence } from "framer-motion";
-import { Moon, RefreshCw, Sun, TriangleAlert } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import { Moon, PanelLeftOpen, RefreshCw, Sun, TriangleAlert } from "lucide-react";
 import { ApiCard } from "./components/ApiCard";
+import { ApiViewModal } from "./components/ApiViewModal";
 import { EmptyState } from "./components/EmptyState";
 import { FilterBar } from "./components/FilterBar";
 import { FilterDrawer, type DrawerMode } from "./components/FilterDrawer";
 import { Hero } from "./components/Hero";
+import { LandingPage } from "./components/LandingPage";
 import { MobileNav } from "./components/MobileNav";
 import { SearchBar } from "./components/SearchBar";
 import { Sidebar, type CategoryCount } from "./components/Sidebar";
@@ -15,13 +17,15 @@ import { useDebounce } from "./hooks/useDebounce";
 import { useFavorites } from "./hooks/useFavorites";
 import { useTheme } from "./hooks/useTheme";
 import { fuzzyScore } from "./lib/fuzzy";
-import type { FilterState, SortMode } from "./types";
+import type { ApiEntry, FilterState, SortMode } from "./types";
 
 const PAGE_SIZE = 60;
 const ANIMATED_CARDS = 24;
 const NO_FILTERS: FilterState = { auth: "all", cors: "all", https: "all" };
 
 export default function App() {
+  const [showApp, setShowApp] = useState(false);
+
   const { status, entries, stale, fromCache, refreshing, refresh } = useApis();
   const { favorites, toggleFavorite } = useFavorites();
   const { theme, toggleTheme } = useTheme();
@@ -33,7 +37,9 @@ export default function App() {
   const [favoritesOnly, setFavoritesOnly] = useState(false);
   const [sort, setSort] = useState<SortMode>("az");
   const [drawer, setDrawer] = useState<DrawerMode>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const [viewEntry, setViewEntry] = useState<ApiEntry | null>(null);
 
   const searchRef = useRef<HTMLInputElement>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
@@ -220,166 +226,208 @@ export default function App() {
   const visible = sorted.slice(0, visibleCount);
 
   return (
-    <div className="min-h-screen bg-bg font-sans text-ink">
-      <div className="mx-auto flex max-w-[1440px]">
-        <Sidebar
-          categories={categoryList}
-          selected={selectedCategories}
-          onToggleCategory={toggleCategory}
-          onClearCategories={clearCategories}
-          totalCount={searched.length}
-        />
-
-        <main className="min-w-0 flex-1 px-4 pb-28 pt-4 sm:px-6 lg:px-8 lg:pb-12">
-          {/* Top bar */}
-          <header className="mb-4 flex items-center justify-between gap-3">
-            <p className="font-mono text-sm font-bold text-acc lg:invisible">
-              &gt;_ API EXPLORER
-            </p>
-            <div className="flex items-center gap-1.5">
-              {stale && (
-                <span className="hidden items-center gap-1.5 rounded-md border border-warn/40 bg-warn/10 px-2 py-1 font-mono text-[11px] text-warn sm:inline-flex">
-                  <TriangleAlert size={12} /> cached data — network unavailable
-                </span>
-              )}
-              <button
-                type="button"
-                onClick={refresh}
-                disabled={refreshing}
-                title="Refresh data"
-                aria-label="Refresh data"
-                className="rounded-md border border-edge p-2 text-mut transition-colors hover:border-acc/50 hover:text-acc disabled:opacity-50"
-              >
-                <RefreshCw size={14} className={refreshing ? "animate-spin" : undefined} />
-              </button>
-              <button
-                type="button"
-                onClick={toggleTheme}
-                title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-                aria-label="Toggle color theme"
-                className="rounded-md border border-edge p-2 text-mut transition-colors hover:border-acc/50 hover:text-acc"
-              >
-                {theme === "dark" ? <Sun size={14} /> : <Moon size={14} />}
-              </button>
-            </div>
-          </header>
-
-          <div className="flex flex-col gap-4">
-            <AnimatePresence initial={false}>
-              {landing && (
-                <Hero
-                  totalApis={entries.length}
-                  totalCategories={allCategoryNames.length}
+    <AnimatePresence mode="wait">
+      {!showApp ? (
+        <motion.div
+          key="landing"
+          initial={{ opacity: 1 }}
+          exit={{ opacity: 0, y: -16, scale: 0.98 }}
+          transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+        >
+          <LandingPage onEnter={() => setShowApp(true)} />
+        </motion.div>
+      ) : (
+        <motion.div
+          key="app"
+          initial={{ opacity: 0, y: 18 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+        >
+          <div className="min-h-screen bg-bg font-sans text-ink">
+            <div className="mx-auto flex max-w-[1440px]">
+              {sidebarOpen && (
+                <Sidebar
+                  categories={categoryList}
+                  selected={selectedCategories}
+                  onToggleCategory={toggleCategory}
+                  onClearCategories={clearCategories}
+                  totalCount={searched.length}
+                  onCollapse={() => setSidebarOpen(false)}
                 />
               )}
-            </AnimatePresence>
 
-            <SearchBar
-              value={query}
-              onChange={setQuery}
-              inputRef={searchRef}
-              status={status}
-              stale={stale}
-              fromCache={fromCache}
-              entryCount={entries.length}
-            />
-
-            <FilterBar
-              auth={filters.auth}
-              onAuthChange={(v) => setFilters((f) => ({ ...f, auth: v }))}
-              cors={filters.cors}
-              onCorsChange={(v) => setFilters((f) => ({ ...f, cors: v }))}
-              https={filters.https}
-              onHttpsChange={(v) => setFilters((f) => ({ ...f, https: v }))}
-              zeroFriction={zeroFriction}
-              onToggleZeroFriction={toggleZeroFriction}
-              favoritesOnly={favoritesOnly}
-              onToggleFavoritesOnly={() => setFavoritesOnly((v) => !v)}
-              favoritesCount={favorites.size}
-              sort={sort}
-              onSortChange={setSort}
-              activeCount={activeFilterCount}
-              onClearAll={clearAll}
-            />
-
-            <StatsCards
-              totalApis={entries.length}
-              totalCategories={allCategoryNames.length}
-              matching={sorted.length}
-            />
-
-            {status === "loading" && (
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                {Array.from({ length: 6 }, (_, i) => (
-                  <div key={i} className="card h-44 rounded-lg p-4">
-                    <div className="skeleton-cursor mb-3 h-4 w-2/5 rounded" />
-                    <div className="skeleton-cursor mb-2 h-3 w-full rounded" />
-                    <div className="skeleton-cursor h-3 w-3/4 rounded" />
+              <main className="min-w-0 flex-1 px-4 pb-28 pt-4 sm:px-6 lg:px-8 lg:pb-12">
+                {/* Top bar */}
+                <header className="mb-4 flex items-center justify-between gap-3">
+                  <span className="flex items-center gap-2">
+                    {!sidebarOpen && (
+                      <button
+                        type="button"
+                        onClick={() => setSidebarOpen(true)}
+                        title="Show sidebar"
+                        aria-label="Show sidebar"
+                        className="hidden rounded-md border border-edge p-2 text-mut transition-colors hover:border-acc/50 hover:text-acc lg:inline-flex"
+                      >
+                        <PanelLeftOpen size={14} />
+                      </button>
+                    )}
+                    <p
+                      className={`font-mono text-sm font-bold text-acc ${sidebarOpen ? "lg:invisible" : ""
+                        }`}
+                    >
+                      &gt;_ API EXPLORER
+                    </p>
+                  </span>
+                  <div className="flex items-center gap-1.5">
+                    {stale && (
+                      <span className="hidden items-center gap-1.5 rounded-md border border-warn/40 bg-warn/10 px-2 py-1 font-mono text-[11px] text-warn sm:inline-flex">
+                        <TriangleAlert size={12} /> cached data — network unavailable
+                      </span>
+                    )}
+                    <button
+                      type="button"
+                      onClick={refresh}
+                      disabled={refreshing}
+                      title="Refresh data"
+                      aria-label="Refresh data"
+                      className="rounded-md border border-edge p-2 text-mut transition-colors hover:border-acc/50 hover:text-acc disabled:opacity-50"
+                    >
+                      <RefreshCw size={14} className={refreshing ? "animate-spin" : undefined} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={toggleTheme}
+                      title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+                      aria-label="Toggle color theme"
+                      className="rounded-md border border-edge p-2 text-mut transition-colors hover:border-acc/50 hover:text-acc"
+                    >
+                      {theme === "dark" ? <Sun size={14} /> : <Moon size={14} />}
+                    </button>
                   </div>
-                ))}
-              </div>
-            )}
+                </header>
 
-            {status === "error" && <EmptyState variant="error" onAction={refresh} />}
+                <div className="flex flex-col gap-4">
+                  <AnimatePresence initial={false}>
+                    {landing && (
+                      <Hero
+                        totalApis={entries.length}
+                        totalCategories={allCategoryNames.length}
+                      />
+                    )}
+                  </AnimatePresence>
 
-            {status === "ready" && sorted.length === 0 && (
-              <EmptyState variant="no-results" onAction={clearAll} />
-            )}
+                  <SearchBar
+                    value={query}
+                    onChange={setQuery}
+                    inputRef={searchRef}
+                    status={status}
+                    stale={stale}
+                    fromCache={fromCache}
+                    entryCount={entries.length}
+                  />
 
-            {status === "ready" && sorted.length > 0 && (
-              <>
-                <div
-                  key={filterKey}
-                  className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3"
-                >
-                  {visible.map((entry, i) => (
-                    <ApiCard
-                      key={entry.id}
-                      entry={entry}
-                      isFavorite={favorites.has(entry.id)}
-                      onToggleFavorite={toggleFavorite}
-                      onSelectCategory={selectSingleCategory}
-                      animateIn={i < ANIMATED_CARDS}
-                      index={i}
-                    />
-                  ))}
+                  <FilterBar
+                    auth={filters.auth}
+                    onAuthChange={(v) => setFilters((f) => ({ ...f, auth: v }))}
+                    cors={filters.cors}
+                    onCorsChange={(v) => setFilters((f) => ({ ...f, cors: v }))}
+                    https={filters.https}
+                    onHttpsChange={(v) => setFilters((f) => ({ ...f, https: v }))}
+                    zeroFriction={zeroFriction}
+                    onToggleZeroFriction={toggleZeroFriction}
+                    favoritesOnly={favoritesOnly}
+                    onToggleFavoritesOnly={() => setFavoritesOnly((v) => !v)}
+                    favoritesCount={favorites.size}
+                    sort={sort}
+                    onSortChange={setSort}
+                    activeCount={activeFilterCount}
+                    onClearAll={clearAll}
+                  />
+
+                  <StatsCards
+                    totalApis={entries.length}
+                    totalCategories={allCategoryNames.length}
+                    matching={sorted.length}
+                  />
+
+                  {status === "loading" && (
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                      {Array.from({ length: 6 }, (_, i) => (
+                        <div key={i} className="card h-44 rounded-lg p-4">
+                          <div className="skeleton-cursor mb-3 h-4 w-2/5 rounded" />
+                          <div className="skeleton-cursor mb-2 h-3 w-full rounded" />
+                          <div className="skeleton-cursor h-3 w-3/4 rounded" />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {status === "error" && <EmptyState variant="error" onAction={refresh} />}
+
+                  {status === "ready" && sorted.length === 0 && (
+                    <EmptyState variant="no-results" onAction={clearAll} />
+                  )}
+
+                  {status === "ready" && sorted.length > 0 && (
+                    <>
+                      <div
+                        key={filterKey}
+                        className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3"
+                      >
+                        {visible.map((entry, i) => (
+                          <ApiCard
+                            key={entry.id}
+                            entry={entry}
+                            isFavorite={favorites.has(entry.id)}
+                            onToggleFavorite={toggleFavorite}
+                            onSelectCategory={selectSingleCategory}
+                            onView={setViewEntry}
+                            animateIn={i < ANIMATED_CARDS}
+                            index={i}
+                          />
+                        ))}
+                      </div>
+                      <div ref={sentinelRef} aria-hidden="true" />
+                      {visibleCount < sorted.length && (
+                        <p className="pb-2 text-center font-mono text-xs text-mut">
+                          showing {visible.length.toLocaleString("en-US")} of{" "}
+                          {sorted.length.toLocaleString("en-US")} — scroll for more
+                        </p>
+                      )}
+                    </>
+                  )}
                 </div>
-                <div ref={sentinelRef} aria-hidden="true" />
-                {visibleCount < sorted.length && (
-                  <p className="pb-2 text-center font-mono text-xs text-mut">
-                    showing {visible.length.toLocaleString("en-US")} of{" "}
-                    {sorted.length.toLocaleString("en-US")} — scroll for more
-                  </p>
-                )}
-              </>
-            )}
+              </main>
+            </div>
+
+            <MobileNav
+              favoritesOnly={favoritesOnly}
+              onHome={() => {
+                clearAll();
+                window.scrollTo({ top: 0 });
+              }}
+              onCategories={() => setDrawer("categories")}
+              onFavorites={() => setFavoritesOnly((v) => !v)}
+              onFilters={() => setDrawer("filters")}
+              activeFilterCount={activeFilterCount}
+            />
+
+            <FilterDrawer
+              mode={drawer}
+              onClose={() => setDrawer(null)}
+              filters={filters}
+              onApplyFilters={setFilters}
+              onClearAll={clearAll}
+              categories={categoryList}
+              selectedCategories={selectedCategories}
+              onToggleCategory={toggleCategory}
+              onClearCategories={clearCategories}
+            />
+
+            <ApiViewModal entry={viewEntry} onClose={() => setViewEntry(null)} />
           </div>
-        </main>
-      </div>
-
-      <MobileNav
-        favoritesOnly={favoritesOnly}
-        onHome={() => {
-          clearAll();
-          window.scrollTo({ top: 0 });
-        }}
-        onCategories={() => setDrawer("categories")}
-        onFavorites={() => setFavoritesOnly((v) => !v)}
-        onFilters={() => setDrawer("filters")}
-        activeFilterCount={activeFilterCount}
-      />
-
-      <FilterDrawer
-        mode={drawer}
-        onClose={() => setDrawer(null)}
-        filters={filters}
-        onApplyFilters={setFilters}
-        onClearAll={clearAll}
-        categories={categoryList}
-        selectedCategories={selectedCategories}
-        onToggleCategory={toggleCategory}
-        onClearCategories={clearCategories}
-      />
-    </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
