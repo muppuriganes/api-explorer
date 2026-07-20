@@ -45,17 +45,17 @@ Search, filter, and preview live API responses — all without leaving your brow
 ### 🏠 Landing Page
 > Animated aurora background · Floating particles · Live stats · Scrolling category ticker
 
-<img src="docs/landing-v4.png" alt="Landing Page" width="900"/>
+<img src="docs/landingpage.png" alt="Landing Page" width="900"/>
 
 ### 🗂️ Explorer View
 > 3D card hover · Category sidebar · Live filter bar · Stats counters
 
-<img src="docs/explorer-v4.png" alt="Explorer View" width="900"/>
+<img src="docs/explorer.png" alt="Explorer View" width="900"/>
 
 ### 👁️ API Preview Modal
 > Live JSON fetch · Syntax highlighting · CORS proxy fallback · Response time
 
-<img src="docs/modal-v4.png" alt="API Preview Modal" width="900"/>
+<img src="docs/modal.png" alt="API Preview Modal" width="900"/>
 
 </div>
 
